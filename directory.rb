@@ -1,3 +1,5 @@
+ require "csv"
+
 @students = [] # An empty array accessible to all methods
 
 def input_students
@@ -74,31 +76,30 @@ def get_filename(check_if_exists: true)
     puts "The file #{filename} doesn't exist. Please input the file name again"
     filename = STDIN.gets.chomp
   end
+
   filename
 end
 
 def save_students
   filename = get_filename(check_if_exists: false)
   # Open the file for writing
-  File.open(filename, "w") do |file|
-    # Iterate over the array of students
+  csv_string = CSV.generate do |csv|
     @students.each do |student|
-      student_data = [student[:name], student[:cohort]]
-      csv_line = student_data.join(",")
-      file.puts csv_line
+      csv << [student[:name], student[:cohort].to_s]
     end
   end
+
+  File.write(filename, csv_string)
   puts "Succesfully saved students to #{filename}"
 end
 
 def load_students(filename=nil)
   filename ||= get_filename
-  File.open(filename, "r") do |file|
-    file.readlines.each do |line|
-      name, cohort = line.chomp.split(',')
-      @students << { name: name, cohort: cohort.to_sym }
-    end
+  CSV.foreach(filename) do |row|
+    name, cohort = row
+    @students << { name: name, cohort: cohort.to_sym }
   end
+
   puts "Successfully loaded students from #{filename}"
 end
 
